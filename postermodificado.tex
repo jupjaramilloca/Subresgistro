@@ -1,0 +1,151 @@
+\documentclass{sciposter}
+
+\usepackage{epsfig}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage[english]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[ansinew]{inputenc}
+\usepackage{amsmath}
+
+\hyphenation{po-si-bi-li-dad va-rian-za re-a-li-za-do res-pues-ta e-rro-res co-rre-la-ción des-cri-ben ge-ne-ra-mos li-mi-tar-se}
+
+\def\T{{ \mathrm{\scriptscriptstyle T} }}
+
+\definecolor{BoxCol}{rgb}{0.87,0.9,1}
+\definecolor{SectionCol}{rgb}{0,0,0.5}
+\definecolor{titlecolor}{rgb}{0,0,0.5}
+\definecolor{remarkcolor}{rgb}{0,0,0.5}
+
+
+%!-------------------------------------------------------------------------------
+\begin{document}
+
+\begin{boldmath}\title{\textcolor{titlecolor}{\LARGE{Modelo con efectos mixtos para hallar índice de subregistro}}}
+
+%\vspace{0.1cm}
+
+\author{\large{Estefania Alvarez Piedrahita}\\
+        \large{Juan Pablo Jaramillo Castrillón}\\}
+        
+
+\institute{Universidad Nacional de Colombia sede Medellín\\}
+ \leftlogo[1.8]{unal.png}
+
+\maketitle
+
+%%% Begin of Multicols-Enviroment
+\begin{multicols}{3}
+\large
+%!-------------------------------------------------------------------------------
+\section{Resumen}
+Se empleo metodología lme4 para realizar el problema propuesto por la empresa Tienda Registrada S.A.S la cual es una empresa que logra generar información de manera oportuna y con la base estadística adecuada según se va consolidando en las principales ciudades de Colombia; se planteo  una opción para explicar el numero de registros  mediante variables especificas de una tienda de barrio las cuales eran en mayor parte cualitativas. Encontrando con esta metodología una mejor distribución y adecuación para la variable respuesta, los resultados fueron obtenidos empleando el programa estadístico R
+
+
+%\vspace{0.5cm}
+%!-------------------------------------------------------------------------------
+\section{Modelos GAMLSS}
+El paquete lme4 (Bates, Maechler, Bolker y Walker 2014a) para R (R Core Team 2015) proporciona funciones para ajustar y analizar modelos mixtos lineales, modelos mixtos lineales generalizados y modelos mixtos no lineales. En cada uno de estos nombres, el término "mixto" o, más completamente, "efectos mixtos" denota un modelo que incorpora términos de efectos fijos y aleatorios en una expresión predictiva lineal a partir de la cual se puede evaluar la media condicional de la respuesta.\\
+
+%\vspace{0.5cm}
+%!-------------------------------------------------------------------------------
+
+\section{Introducción}
+Tienda registrada capta la información del comportamiento de los productos de consumo masivo dentro de la tienda de barrio a través del código de barras. Se creo un modelo que explica en numero de registros(R) de una tienda del valle de aburra en función de las covariables: (I)id, (M)mes, (U)ubicación, (S)sector, (D)domicilio, (N)numero de personas, (C)categoría, (E)estrato, (T)tamaño medio, (MS)municipio y (TS)tiempo de servicio de las tiendas .
+Construir un modelo de regresión para tratar de estimar cual es la cantidad de registros da cada tienda. Este modelo se puede utilizar para obtener un indicador de subregistro, para validar la información que llega de las tiendas y así poder analizar que tiendas dejan de registrar en comparación de las otras.
+
+%\vspace{0.5cm}
+%!-------------------------------------------------------------------------------
+
+\section{Análisis descriptivo}
+
+\begin{figure}[h]\centering
+\includegraphics{1.png}
+\end{figure}
+
+Se presenta la base de datos del experimento, en la cual se aprecian las primeras 6 observaciones.
+
+\begin{figure}[h]\centering
+	\includegraphics{2.png}
+	\caption{gráfico de dispersión Id vs numero de registros, agrupado por meses }
+\end{figure}
+
+En la imagen anterior podemos ver  como la variable Id que se encuentran en el eje horizontal vs el numero de registros en el eje vertical  están agrupadas de acuerdo a los meses que es el color que identifica a cada punto, lo que nos indica que se debe de plantear un modelo con efectos mixtos.
+
+%!-------------------------------------------------------------------------------
+\section{Metodología}
+Se buscó usar metodología lme4, en donde se plantearon los mejores modelos respecto a este tipo de método, que pudieran modelar la variables respuesta en nuestro caso el número de registro de una tienda (R).
+Dentro del desarrollo del trabajo se propusieron diferentes tipo de modelo entre ellos lm, transformaciones, splines, GAMLSS y lmer. Para la selección de los mejores modelos se utilizaron los criterios: Normalidad de los errores, AIC, Correlación con la variables respuesta. En busca del mejor modelo posible, se realizo un proceso de selección de variables con la función Step.GAICALL.A(), pero el modelo final se eligió mediante un proceso en donde solo se tuvo en cuanta los anteriores criterios.
+
+
+\begin{figure}[h]\centering
+\includegraphics{3.png}
+\end{figure}
+
+
+%!-------------------------------------------------------------------------------
+\section{Resultados}
+Después de analizar los modelos con los criterios de AIC, correlación y normalidad de los errores, aunque en el ultimo modelo al usar metodología lmer no se obtuviera el AIC y el ${R}^{2}$ ,descartamos los modelos que tenían la correlación mas baja o  el  modelo que no se podía interpretar y por ultimo elegimos el modelo con la mejor capacidad de explicar la variable respuesta en términos de correlación.
+
+\begin{figure}[h]\centering
+\includegraphics{4.png}
+\end{figure}
+
+En la tabla anterior podemos observar como los residuales están agrupados alrededor del cero , el Min con un resultado de  -4.3084 y en el Max 6.3320 lo cual nos indica que hay una sobre estimación , también podemos observar la varianza de (M) y de (I) que son números muy bajos.
+
+\begin{figure}[h]\centering
+	\includegraphics{rg.pdf}
+\end{figure}
+
+
+En la gráfica anterior podemos observar como los residuales se encuentran alrededor de la linea cero y un breve patrón.\\
+
+En la gráfica de normalidad podemos ver que en los extremos los puntos comienzan a dispersarse un poco pero no lo suficiente como para concluir que no existe normalidad.
+
+\begin{figure}[h]\centering
+	\includegraphics{c.pdf}
+	\caption{Trazos de oruga de efectos aleatorios}
+\end{figure}
+
+En esta gráfica vemos los efectos aleatorios del intercepto y de la pendiente, luego este tambien nos dice como fueron ajustados los grupos, por medio de intervalos de confianza.  
+%!-------------------------------------------------------------------------------
+\section{Conclusiones}
+Se obtiene como resultado un modelo  con cual se puede predecir el numero de registros de una tienda de acuerdo a una correlación de 0.62 lo cual nos indica que es un modelo que puede ser confiable ya que la variables respuesta es cuantitativa y la mayoría de las covariables con cualitativas lo que genera entre ellas poca correlación.\\
+
+También notamos como el paquete lme es mas fuerte que GAMLSS , ya que comparando el mismo modelo con estos dos paquetes obtuvimos una mejor correlación con el lme.
+
+\normalsize
+%!-------------------------------------------------------------------------------
+\section*{Referencias}
+\begin{description}
+	\item[Bates,D Walker,S;Fitting Linear Mixed-Effects\ 
+	Models Using lme4](2015).
+	\textit{https://cran.r-project.org/web/packages/lme4/vignettes/lmer.pdf}
+	
+	\item [	A Visual Introduction to Hierarchical Models]
+	\textit{Mfviz.com}
+	\it 	http://mfviz.com/hierarchical-models/
+	
+	\item[Cran.r-project.org]
+	\textit{https://cran.r-project.org/web/packages/lme4/vignettes/lmer.pdf}
+	
+
+
+\large
+\begin{figure}[h]\centering
+	\includegraphics{QR.jpg}
+\end{figure}
+Escanea el codigo y para ver los codigos en R
+
+
+\end{description}
+
+
+%!-------------------------------------------------------------------------------
+\end{multicols}
+\end{boldmath}
+\end{document}
+%!-------------------------------------------------------------------------------
