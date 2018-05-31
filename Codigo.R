@@ -3,32 +3,28 @@ dat <- read.csv2( file = "Base de Datos Tiendas.csv")
 dat$Tiempo.de.servicio <- as.numeric(substr(x = dat$Tiempo.de.servicio,start = 0,stop = 2))
 ## Sacar la variables con la que vamos a trabajar
 dat <- data.frame(dat[,c(1,2,3,4,5,7,10,11,14,15,16,17)])
-colnames(dat)<- c("x1","x2","y","x3","x4","x5","x6","x7","x8","x9","x10","x11")
-dat <-na.omit(dat)
+colnames(dat)<- c("I","M","R","U","S","D","N","C","E","TM","MS","TS")
 #--------------------------------------------------------------------------
 #/////////////Nombres de la variables /////////////////////////////////////
 #--------------------------------------------------------------------------
-## y : numero de registrso
-# x1 : id
-# x2: mes
-# x3 : Ubicacion
-# x4 : sector
-# x5 : Domicilio 
-# x6 : numero de personas
-# x7 : categoria 
-# x8 : estrato
-# x9 : tamaño medio
-# x10 : municipio 
-# x11: tiempo de cervicio
+## R: numero de registrso
+# id : id
+# M: mes
+# U : Ubicacion
+# S : sector
+# D : Domicilio 
+# N : numero de personas
+# C : categoria 
+# E : estrato
+# TM: tamaño medio
+# MS : municipio 
+# Ts: tiempo de cervicio
 #---------------------------------------------------------------------------
-dat$x3<-as.factor(x = dat$x3)
-dat$x2 <- as.integer(dat$x2)
-dat$y <- as.numeric(dat$y)
-dat$x11 <- as.numeric(dat$x11)
-dat$x8 <- as.factor(dat$x8)
-dat$x9 <- as.numeric(dat$x9)
-dat$x6 <- as.integer(dat$x6)
-dat$x1 <- as.integer(dat$x1)
+dat$M <- as.factor(dat$M)
+dat$R <- as.integer(dat$R)
+dat$TS <- as.numeric(dat$TS)
+dat$I <- as.factor(dat$I)
+dat <- na.omit(dat)
 #----------------------------------------------------------------------------
 #//////////////////Mejor distribuciones para la variable respuesta    ///////
 #----------------------------------------------------------------------------
@@ -63,16 +59,17 @@ four.hist <- function(k, f, p,datos) {
   }
 }
 #para mirar la distribucion para cada uno de los meses 
-d1 <- subset(x = dat,subset = x2== 1, select = c(x1,y))
-d2 <- subset(x = dat,subset = x2 == 2, select = c(x1,y))
-d3<-subset(x = dat,subset = x2 == 3, select = c(x1,y))
-d4<-subset(x = dat,subset = x2 == 4, select = c(x1,y))
-d5<- subset(x = dat,subset = x2 == 5, select = c(x1,y))
-d6 <- subset(x = dat,subset = x2 == 6, select = c(x1,y))
-d7 <- subset(x = dat,subset = x2 == 7, select = c(id,Registros))
-d8 <- subset(x = dat,subset = x2 == 8, select = c(id,Registros))
+d1 <- subset(x = dat,subset = M== 1, select = c(I,R))
+d2 <- subset(x = dat,subset = M == 2, select = c(I,R))
+d3<-subset(x = dat,subset = M == 3, select = c(I,R))
+d4<-subset(x = dat,subset = M == 4, select = c(I,R))
+d5<- subset(x = dat,subset = M == 5, select = c(I,R))
+d6 <- subset(x = dat,subset = M == 6, select = c(I,R))
+d7 <- subset(x = dat,subset = M == 7, select = c(I,R))
+d8 <- subset(x = dat,subset = M == 8, select = c(I,R))
 ## funcion para busca la variable 
-four.hist(k = 2,f = "realplus",p = 2,datos = d1)
+require(gamlss)
+fitDist(y = dat$R,k = log(nrow(dat)),type = "realplus")
 four.hist(k = 2,f = "realplus",p = 2,datos = d2)
 four.hist(k = 2,f = "realplus",p = 2,datos = d3)
 four.hist(k = 2,f = "realplus",p = 2,datos = d6)
@@ -81,64 +78,92 @@ four.hist(k = 2,f = "realplus",p = 2,datos = d6)
 #/////////////////Mejores Modelos //////////////////////////////////////////
 #----------------------------------------------------------------------------
 library(gamlss)
-mu <- formula(y~(1+x2|x1)+x3+x4+x5+x6+x7+x8+bs(x=x9,degree = 3)+x10+x11+x3*x6+x3*x7+x3*x8+x3*x9+x4*x8+
-                x5:x6+x5*x10+x6*x7+x6*x10+x7*x10+x8*x9+x8*x9+x8*x10)
-sig <- formula(y~.)
-
-mod <- gamlss(formula = mu,sigma.formula = sig,data = dat)
-Rsq(object = mod,type = "both")       ## R^2
-sum((fitted(mod)-dat$y)^2)/nrow(dat) ## MSE
-sum(abs(fitted(mod)-dat$y))/nrow(dat) ## MSE
-cor(fitted(mod),dat$y)               ## correlacion
+mod <- gamlss(formula = R ~ re(random = ~1|M)+S+D+N+C+E+TM+MS+TS,data = dat)
+summary(mod)
+Rsq(mod)
+summary(mod)
+p <- predict(mod)
+cor(dat$R,p)
+sum(abs(p-dat$R))/nrow(dat)
+data.frame(p,dat$R)
 GAIC(mod)
-plot(mod)
-#NOTA: Este aparante ser el mejor modelo pero no tiene interpretacion entre la 
-#interracion de las variables
+stepGAIC(object = mod,scope = ~(re(random = ~1|M)+S+D+N+C+E+TM+MS+TS)^2,direction = "both")
 
-#------------------------------------------------------------------
-mod1 <- gamlss(formula = y~(1+x1|x2)+x2+x6+x8+x7+x9+x10+x11+x8*x9+x8*x10,family = "WEI3",
-               data = dat)
-Rsq(object = mod1,type = "both")       ## R^2
-sum((fitted(mod1)-dat$y)^2)/nrow(dat) ## MSE
-sum(abs(fitted(mod1)-dat$y))/nrow(dat) ## MSE
-cor(fitted(mod1),dat$y)               ## correlacion
-GAIC(mod1)
+
+mod.1 <-gamlss(formula = R ~ (re(random = ~1 | M)) + S + D + N + C + E + TM + MS + TS +  
+                 C:MS + E:MS + N:MS + D:MS + E:TM + TM:MS + C:TM + C:TS +  
+                 D:TS + TM:TS + MS:TS + N:TM + S:E + N:C + N:TS + D:TM + D:C +  
+                 C:E + E:TS + S:TM + S:D + S:N + S:MS + N:E,data = dat,
+               sigma.formula = ~(re(random = ~1 | M)) + S + D + N + C + E + TM + MS + TS )
+
+Rsq(mod.1)
+plot(mod.1)
+p <- predict(mod.1)
+cor(dat$R,p)
+names(mod.1)
+GAIC(mod.1)
+
+
+#----------------------------------------------------------
+
+
+mod1 <-gamlss(formula = R ~ (re(random = ~1 | M)) + S + D + N + C + E + TM + MS + TS +  
+                C:MS + E:MS + N:MS + D:MS + E:TM + TM:MS + C:TM + C:TS +  
+                D:TS + TM:TS + MS:TS + N:TM + S:E + N:C + N:TS + D:TM + D:C +  
+                C:E + E:TS + S:TM + S:D + S:N + S:MS + N:E,data = dat,
+              sigma.formula = ~(re(random = ~1 | M)) + S + D + N + C + E + TM + MS + TS ,family ="LQNO")
+Rsq(mod1)
 plot(mod1)
-#--------------------------------------------------------------------------
-library(splines)
-sig <- formula(y~x3+x4+x5+x6+x7+x8+x9+x10+x11)
-mod2 <- gamlss(formula = y~(1+x1|x2)+x2+x6+x8+x7+bs(x = x9,degree = 3)+x10+bs(x=x11,degree = 3)
-               +x8*x9+x8*x10+x3*x8,sigma.formula = sig,data = dat,family = "WEI3")
+p <- predict(mod1)
+cor(dat$R,p)
+fitDist(y = dat$R,k = log(nrow(dat)),type = "realplus")
+wp(object = mod1)
+GAIC(mod1)
+#-------------------------------------------------------------------
 
 
-Rsq(object = mod2,type = "both")       ## R^2
-sum((fitted(mod2)-dat$y)^2)/nrow(dat) ## MSE
-sum(abs(fitted(mod2)-dat$y))/nrow(dat) ## MSE
-cor(fitted(mod2),dat$y)               ## correlacion
+
+sig <- formula(~ (re(random = ~1 | M)) + S + D + N + C + E + TM + MS + TS )
+mod2 <-gamlss(formula = R ~ (re(random = ~1 | M)) + S + D + N + C + E + TM + MS + TS +  
+                C:MS + E:MS + N:MS + D:MS + E:TM + TM:MS + C:TM + C:TS +  
+                D:TS + TM:TS + MS:TS + N:TM + S:E + N:C + N:TS + D:TM + D:C +  
+                C:E + E:TS + S:TM + S:D + S:N + S:MS + N:E,data = dat,
+              sigma.formula = sig,family = "LQNO" )
+wp(mod2)
+Rsq(mod2)
 GAIC(mod2)
+wp(mod2)
 plot(mod2)
-
-#-----------------------------------------------------------------------------
-require(lme4)
-require(splines)
-mod3 <- lmer(formula = y~(1+x1|x2)+x2+x6+x8+x7+bs(x = x9,degree = 3)+x10+bs(x=x11,degree = 3)
-             +x8*x9+x8*x10+x3*x8+x5*x6,data = dat)
+p<- predict(mod2)
+cor(x = dat$R,y = p)
+#------------------------------------------------------------------------------------
+#\\\\\\\\\\\\\\\\\\\\\\\\\\\ mejor modelo \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+#------------------------------------------------------------------------------------
+library(gamlss)
+mod3 <-gamlss(formula = R ~ (re(random = ~1 | M))+ S + D  +N + C + E + TM + MS + TS +  
+                C:MS + E:MS + N:MS + D:MS + E:TM + TM:MS + C:TM + C:TS +  
+                D:TS + TM:TS + MS:TS + N:TM + S:E + N:C + N:TS + D:TM + D:C +  
+                C:E + E:TS + S:TM + S:D + S:N + S:MS + N:E,data = dat,
+              sigma.formula = ~(re(random = ~1 | M)) + S + D + N + C + E + TM + MS + TS )
+Rsq(mod3)
+GAIC(mod3)
 p <- predict(mod3)
-cor(x = p,y = dat$y)
-(sum(p-dat$y)^2)/nrow(dat)
-dat<-na.omit(dat)
-par(mfrow=c(2,1))
-plot(fitted(mod3),resid(mod3,type="pearson"),col="blue") #a plot to check the constant standard deviation
-abline(h=0,lwd=2)
-qqnorm(resid(mod3)) 
-qqline(resid(mod3))
-library(lattice)
-dotplot(ranef(mod3,condVar=TRUE))
-summary(mod3)
-
+cor(dat$R,p)
 #-----------------------------------------------------------------------------------
-dat$x2 <- as.factor(dat$x2)
+#////////////////////////// GRAFICAS ///////////////////////////////////////////////
+#-----------------------------------------------------------------------------------
+dat$M <- as.factor(dat$M)
 require(plotly)
-plot_ly(data = dat,x=~x1,y=~y,color=~x2,alpha = 1 ,colors = "set5")
-          
+plot_ly(data = dat,x=~N,y=~R,color=~M,alpha = 1)
+# grafica de residuales
+library(plotly) 
+Residules <- residuals(mod.1)
+Valores_ajustados <- fitted.values(mod.1)
+plot_ly(x=~Valores_ajustados,y=~Residules)
 
+
+# grafica de normalidad
+
+qqnorm(Residules)
+qqline(Residules,col="red")
+grid()
